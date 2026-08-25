@@ -1,0 +1,59 @@
+{
+  "name": "wtf-bro",
+  "version": "0.1.0",
+  "description": "Undo global buat vibecoder yang panik pas AI agent merusak codebase. Safety-first git rollback.",
+  "license": "MIT",
+  "type": "module",
+  "author": "harikahono",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harikahono/wtf-bro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harikahono/wtf-bro/issues"
+  },
+  "homepage": "https://github.com/harikahono/wtf-bro#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "wtf": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "git",
+    "rollback",
+    "undo",
+    "ai-agent",
+    "cli",
+    "panic",
+    "recovery"
+  ],
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "cross-spawn": "^7.0.3",
+    "picocolors": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.23.12",
+    "typescript": "^5.5.0"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.2": true
+  }
+}
