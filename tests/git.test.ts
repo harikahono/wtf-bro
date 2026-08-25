@@ -16,6 +16,7 @@ import {
   createSavePoint,
   undoToSavePoint,
   cleanBackups,
+  listSavePoints,
   type RepoInfo,
 } from "../src/git.js";
 
@@ -226,4 +227,48 @@ test("cleanBackups: hapus tag+stash backup, save point AMAN", async () => {
   assert.ok(!stashes.includes("wtf-bro-backup"));
   // save point TETAP ada
   assert.ok(tags.includes("wtf-bro-save-keep"));
+});
+
+// --- Slice: wtf steps (listSavePoints) + wtf undo <label> ---
+
+test("listSavePoints: list semua save point dgn label + ts", async () => {
+  const dir = makeRepo(3);
+  await createSavePoint(dir, "before-refactor", "2026-01-01T01-00-00-000Z");
+  await createSavePoint(dir, "wip", "2026-01-01T02-00-00-000Z");
+
+  const pts = await listSavePoints(dir);
+  assert.equal(pts.length, 2);
+  // label & ts di-parse bener
+  assert.deepEqual(
+    pts.map((p) => p.label).sort(),
+    ["before-refactor", "wip"],
+  );
+  assert.ok(pts.every((p) => p.tagName.startsWith("wtf-bro-save-") && p.ts.length > 0));
+});
+
+test("undoToSavePoint(label): balik ke save point tertentu by label", async () => {
+  const dir = makeRepo(3); // a.txt = v3
+  await createSavePoint(dir, "alpha", "2026-01-01T01-00-00-000Z"); // di v3
+
+  // save point kedua setelah ada perubahan (di v3 juga, sama)
+  writeFileSync(join(dir, "a.txt"), "v3-changed");
+  run(dir, ["add", "a.txt"]);
+  run(dir, ["commit", "-q", "-m", "c4"]);
+  await createSavePoint(dir, "bravo", "2026-01-01T02-00-00-000Z"); // di v4 (a.txt=v3-changed)
+
+  // AI ngaco setelah save bravo
+  writeFileSync(join(dir, "a.txt"), "RUINED");
+  writeFileSync(join(dir, "mess.txt"), "ai");
+
+  // undo ke save 'alpha' (yang di v3) -> a.txt harus v3, bukan v3-changed
+  const undo = await undoToSavePoint(dir, "alpha");
+  assert.equal(undo.ok, true);
+  assert.equal(readFileSync(join(dir, "a.txt"), "utf8"), "v3");
+  assert.equal(existsSync(join(dir, "mess.txt")), false);
+});
+
+test("undoToSavePoint(label): label ga ada -> ok:false", async () => {
+  const dir = makeRepo(2);
+  const undo = await undoToSavePoint(dir, "ga-ada-label");
+  assert.equal(undo.ok, false);
 });

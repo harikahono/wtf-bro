@@ -12,6 +12,7 @@ import {
   revertUncommitted,
   resetToCommit,
   cleanBackups,
+  listSavePoints,
 } from "./git.js";
 import {
   showHeader,
@@ -49,6 +50,29 @@ function cmdLog(): void {
     );
   }
   console.log(pc.dim(`\nFile: ${getHistoryFile()}`));
+}
+
+// wtf steps — list semua save point (checkpoint)
+async function cmdSteps(): Promise<void> {
+  const info = await getRepoInfo(CWD);
+  if (!info.isRepo) {
+    showError("Ga ketemu repo git di folder ini.");
+    return;
+  }
+  const points = await listSavePoints(CWD);
+  if (points.length === 0) {
+    p.log.info(pc.dim("Belum ada save point. Pakai: wtf save [label]"));
+    return;
+  }
+  console.log(pc.bold("Save points (checkpoint):"));
+  points.forEach((pt, i) => {
+    // ts ISO '2026-08-25T19-23-38-948Z' -> tanggal + jam baca
+    const readable = pt.ts.replace(/(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2}).*/, "$1 $2:$3");
+    console.log(
+      `  ${pc.dim(`[${i + 1}]`)} ${pc.green(pt.label)}  ${pc.dim(readable)}  ${pc.dim(pt.tagName)}`,
+    );
+  });
+  console.log(pc.dim(`\nBalik ke salah satu: wtf undo <label>`));
 }
 
 // wtf save [label] — tandain posisi aman
@@ -90,9 +114,14 @@ async function cmdUndo(ref?: string): Promise<void> {
   let result;
   let type: HistoryEntry["type"] = "rollback1";
   if (ref) {
-    // rollback ke commit spesifik
-    result = await resetToCommit(CWD, ref);
-    type = "rollback3"; // marker umum buat undo ke commit tertentu
+    // coba save point by label dulu; kalau ga ada, anggap ref git biasa (hash/branch/tag)
+    const save = await undoToSavePoint(CWD, ref);
+    if (save.ok) {
+      result = save;
+    } else {
+      result = await resetToCommit(CWD, ref);
+      type = "rollback3"; // marker umum buat undo ke commit tertentu
+    }
   } else {
     // smart: coba save point dulu, kalau ga ada -> revert uncommitted
     const save = await undoToSavePoint(CWD);
@@ -212,6 +241,10 @@ async function main(): Promise<void> {
   }
   if (sub === "save") {
     await cmdSave(arg ?? "default");
+    return;
+  }
+  if (sub === "steps") {
+    await cmdSteps();
     return;
   }
   if (sub === "undo") {

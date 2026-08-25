@@ -218,12 +218,45 @@ export async function createSavePoint(
   return { ok: true, tagName, stashName };
 }
 
-// Balik ke save point terbaru (tag wtf-bro-save-*).
-// Cari tag terbaru (nama mengandung ISO timestamp -> sort lexicografis valid).
-export async function undoToSavePoint(cwd: string): Promise<RollbackResult> {
+export interface SavePoint {
+  tagName: string;
+  label: string;
+  ts: string;
+}
+
+// Parse tag 'wtf-bro-save-<label>-<ts>'. Lazy capture label biar label boleh ada '-'.
+const SAVE_TAG_RE = /^wtf-bro-save-(.*?)-(\d{4}-\d{2}-\d{2}T.*Z)$/;
+
+// List semua save point (tag wtf-bro-save-*), urut dari yang paling lama.
+export async function listSavePoints(cwd: string): Promise<SavePoint[]> {
   const list = await runGit(["tag", "-l", "wtf-bro-save-*"], cwd);
+  if (!list.ok || list.stdout.trim().length === 0) return [];
+  const points: SavePoint[] = [];
+  for (const tag of list.stdout.split("\n").map((t) => t.trim()).filter(Boolean)) {
+    const m = tag.match(SAVE_TAG_RE);
+    if (m) points.push({ tagName: tag, label: m[1], ts: m[2] });
+  }
+  points.sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
+  return points;
+}
+
+// Balik ke save point (tag wtf-bro-save-*).
+// - label null  -> save point terbaru (default, buat `wtf undo`)
+// - label ada   -> save point dengan label itu (buat `wtf undo <label>`)
+export async function undoToSavePoint(
+  cwd: string,
+  label?: string,
+): Promise<RollbackResult> {
+  const pattern = label ? `wtf-bro-save-${label}-*` : "wtf-bro-save-*";
+  const list = await runGit(["tag", "-l", pattern], cwd);
   if (!list.ok || list.stdout.trim().length === 0) {
-    return { ok: false, rolledBackTo: null, error: "ga ada save point. Pakai 'wtf save' dulu." };
+    return {
+      ok: false,
+      rolledBackTo: null,
+      error: label
+        ? `ga ada save point '${label}'. Cek: wtf steps`
+        : "ga ada save point. Pakai 'wtf save' dulu.",
+    };
   }
   const tags = list.stdout.split("\n").map((t) => t.trim()).filter(Boolean);
   tags.sort(); // ISO timestamp di nama -> yang terakhir = terbaru

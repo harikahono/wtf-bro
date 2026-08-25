@@ -14,20 +14,32 @@ Jadi kalau salah pencet atau AI-nya ngaco, lu ga kehilangan data permanen.
 
 ## Install
 
-```bash
-# Jalur utama (cocok buat skenario panik — ga perlu install dulu)
-npx wtf-bro
+Package `wtf-bro` terbit di **npm registry** — jadi bisa dipasang/dijalankan dari **semua package manager** (mereka semua pakai registry yang sama):
 
-# Atau install global biar command instan
-npm i -g wtf-bro
+```bash
+# ── Jalur "tanpa install" (cocok buat skenario panik — ga perlu install dulu) ──
+npx wtf-bro            # npm
+pnpm dlx wtf-bro       # pnpm
+bunx wtf-bro           # bun
+yarn dlx wtf-bro       # yarn
+
+# ── Install global biar command instan ──
+npm i -g wtf-bro       # npm
+pnpm i -g wtf-bro      # pnpm
+bun i -g wtf-bro       # bun
+yarn global add wtf-bro
 ```
+
+Catatan: `pnpm`/`bun` global kadang butuh `pnpm setup` / `bun setup` biar bin `wtf` masuk PATH. Jalur `dlx`/`bunx`/`npx` ga perlu itu. Runtime `wtf-bro` cuma butuh **Node ≥18 + git** — bebas dari package manager mana pun.
 
 ## Cara pakai
 
 ```bash
 wtf                 # TUI interaktif: pilih level rollback (1 / 3 / nuklir)
 wtf save [label]    # tandain posisi aman SEKARANG (panic button)
+wtf steps           # list semua save point / checkpoint
 wtf undo            # balik ke save point terakhir, atau ke HEAD kalau ga ada
+wtf undo <label>    # balik ke save point tertentu (mis. wtf undo before-ai)
 wtf undo <commit>   # balik ke commit tertentu (hash / branch / tag)
 wtf --reset 1       # rollback 1 commit (non-interaktif, tetap auto-backup)
 wtf --reset 3       # rollback 3 commit
@@ -44,6 +56,8 @@ Di TUI lu pilih:
 ### Save point = posisi aman buat dongo
 
 `wtf save` bikin tag `wtf-bro-save-<label>-<ts>` di commit lu sekarang. Kalau working tree lagi kotor, WIP lu di-stash dulu biar ga ilang. Pas AI ngaco, tinggal `wtf undo` → balik persis ke posisi itu (termasuk hapus file sampah yang AI bikin).
+
+Liat semua save point: `wtf steps` (kayak daftar checkpoint). Balik ke salah satu: `wtf undo <label>`.
 
 `wtf undo` (tanpa arg) cerdas:
 1. Kalau ada save point → balik ke situ.
@@ -95,7 +109,9 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 | Situasi | Command |
 |---|---|
 | Mau amanin posisi sebelum AI kerja | `wtf save [label]` |
+| Mau liat semua save point / checkpoint | `wtf steps` |
 | AI ngaco, mau balik ke posisi aman | `wtf undo` |
+| Mau balik ke save point tertentu | `wtf undo <label>` |
 | Mau batalin semua perubahan yang belum di-commit | `wtf undo` |
 | Mau mundur beberapa commit | `wtf --reset N` |
 | Mau reset total + hapus file sampah | `wtf --reset nuclear` |
@@ -114,6 +130,7 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 
 - ✅ Auto-backup (tag + stash) sebelum tiap rollback
 - ✅ Save point (`wtf save`) + smart undo (`wtf undo`) — tombol aman buat dongo
+- ✅ `wtf steps` — daftar checkpoint + undo by label (`wtf undo <label>`)
 - ✅ `wtf clean-backups` — bersihin tag/stash backup lama (save point aman)
 - ✅ Audit log lokal di `~/.wtf/history.json`
 - ✅ Konfirmasi ekstra buat reset nuklir (ketik ulang nama branch)
