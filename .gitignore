@@ -1,3 +1,9 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# secrets — never commit
+npm_recovery_codes.txt
+*recovery*.txt
+*.codes
+RECOVERY_CODES.md
