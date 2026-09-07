@@ -240,6 +240,44 @@ export async function listSavePoints(cwd: string): Promise<SavePoint[]> {
   return points;
 }
 
+export interface DoctorInfo {
+  isRepo: boolean;
+  branch: string | null;
+  detachedHead: boolean;
+  commitCount: number;
+  savePointCount: number;
+  backupCount: number;
+}
+
+// Diagnostic info buat `wtf doctor`
+export async function doctor(cwd: string): Promise<DoctorInfo> {
+  const info = await getRepoInfo(cwd);
+  if (!info.isRepo) {
+    return {
+      isRepo: false,
+      branch: null,
+      detachedHead: false,
+      commitCount: 0,
+      savePointCount: 0,
+      backupCount: 0,
+    };
+  }
+  const savePoints = await listSavePoints(cwd);
+  const backupList = await runGit(["tag", "-l", "wtf-bro-backup-*"], cwd);
+  let backupCount = 0;
+  if (backupList.ok && backupList.stdout.trim()) {
+    backupCount = backupList.stdout.split("\n").filter(Boolean).length;
+  }
+  return {
+    isRepo: true,
+    branch: info.branch,
+    detachedHead: info.detachedHead,
+    commitCount: info.commitCount,
+    savePointCount: savePoints.length,
+    backupCount,
+  };
+}
+
 // Balik ke save point (tag wtf-bro-save-*).
 // - label null  -> save point terbaru (default, buat `wtf undo`)
 // - label ada   -> save point dengan label itu (buat `wtf undo <label>`)

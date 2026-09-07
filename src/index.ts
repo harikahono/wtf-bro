@@ -13,6 +13,8 @@ import {
   resetToCommit,
   cleanBackups,
   listSavePoints,
+  doctor,
+  runGit,
 } from "./git.js";
 import {
   showHeader,
@@ -236,6 +238,32 @@ async function cmdCleanBackups(): Promise<void> {
   p.log.info(pc.dim("Save point (wtf-bro-save-*) ga disentuh."));
 }
 
+// wtf doctor — cek kondisi repo + hitung save point & backup
+async function cmdDoctor(): Promise<void> {
+  const info = await doctor(CWD);
+  if (!info.isRepo) {
+    showError("Ga ketemu repo git di folder ini.");
+    return;
+  }
+  if (process.argv.includes("--json")) {
+    console.log(JSON.stringify(info, null, 2));
+    return;
+  }
+  console.log(pc.bold("wtf-bro doctor:"));
+  console.log(`  ${pc.dim("Repo")}     ${pc.green("√")} ${CWD}`);
+  console.log(`  ${pc.dim("Branch")}   ${info.branch ?? pc.red("detached HEAD")}`);
+  console.log(`  ${pc.dim("Detached")}  ${info.detachedHead ? pc.yellow("yes") : pc.green("no")}`);
+  console.log(`  ${pc.dim("Commits")}   ${info.commitCount}`);
+  console.log(`  ${pc.dim("Save points")} ${info.savePointCount}`);
+  console.log(`  ${pc.dim("Backups")}    ${info.backupCount}`);
+  if (info.savePointCount === 0) {
+    p.log.info(pc.dim("Belum ada save point. Pakai: wtf save [label]"));
+  }
+  if (info.backupCount > 10) {
+    p.log.warn(pc.yellow(`Backup banyak (${info.backupCount}). Bersihin: wtf clean-backups`));
+  }
+}
+
 async function main(): Promise<void> {
   const sub = process.argv[2];
   const arg = process.argv[3];
@@ -258,6 +286,10 @@ async function main(): Promise<void> {
   }
   if (sub === "clean-backups") {
     await cmdCleanBackups();
+    return;
+  }
+  if (sub === "doctor") {
+    await cmdDoctor();
     return;
   }
   if (sub === "--reset" && arg) {
