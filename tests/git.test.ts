@@ -18,6 +18,7 @@ import {
   cleanBackups,
   listSavePoints,
   doctor,
+  refExists,
   type RepoInfo,
 } from "../src/git.js";
 
@@ -298,4 +299,12 @@ test("doctor: di non-repo -> isRepo false", async () => {
   dirsToClean.push(nonRepo);
   const info = await doctor(nonRepo);
   assert.equal(info.isRepo, false);
+});
+
+// --- Slice: undo <x> invalid -> pesan jelas ---
+
+test("refExists: HEAD ada, ref ngawur ga ada", async () => {
+  const dir = makeRepo(2);
+  assert.equal(await refExists(dir, "HEAD"), true);
+  assert.equal(await refExists(dir, "ga-ada-apa-apa"), false);
 });

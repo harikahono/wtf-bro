@@ -313,6 +313,12 @@ export async function undoToSavePoint(
   return { ok: true, rolledBackTo: latest };
 }
 
+// Cek apakah ref valid (hash/branch/tag). Buat pesan error `wtf undo <x>` yang jelas.
+export async function refExists(cwd: string, ref: string): Promise<boolean> {
+  const r = await runGit(["rev-parse", "--verify", "--quiet", ref], cwd);
+  return r.ok;
+}
+
 // Rollback ke commit tertentu (ref: hash, branch, tag). Buat `wtf undo <commit>`.
 export async function resetToCommit(
   cwd: string,

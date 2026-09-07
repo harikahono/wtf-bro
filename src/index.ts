@@ -15,6 +15,7 @@ import {
   listSavePoints,
   doctor,
   runGit,
+  refExists,
 } from "./git.js";
 import {
   showHeader,
@@ -125,6 +126,14 @@ async function cmdUndo(ref?: string): Promise<void> {
     const save = await undoToSavePoint(CWD, ref);
     if (save.ok) {
       result = save;
+    } else if (!(await refExists(CWD, ref))) {
+      // label ga ada + ref git ga valid -> pesan jelas, jangan lempar raw git stderr
+      result = {
+        ok: false,
+        rolledBackTo: null,
+        error: `Ga nemu save point label "${ref}" atau git ref "${ref}".\nCek save point: wtf steps\nCek commit: git log --oneline`,
+      };
+      type = "rollback3"; // marker umum buat undo ke commit tertentu
     } else {
       result = await resetToCommit(CWD, ref);
       type = "rollback3"; // marker umum buat undo ke commit tertentu
