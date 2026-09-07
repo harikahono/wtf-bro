@@ -60,6 +60,11 @@ async function cmdSteps(): Promise<void> {
     return;
   }
   const points = await listSavePoints(CWD);
+  if (process.argv.includes("--json")) {
+    // Output JSON array for agent-friendly consumption
+    console.log(JSON.stringify(points, null, 2));
+    return;
+  }
   if (points.length === 0) {
     p.log.info(pc.dim("Belum ada save point. Pakai: wtf save [label]"));
     return;
