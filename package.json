@@ -1,6 +1,6 @@
 {
   "name": "wtf-bro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Undo global buat vibecoder yang panik pas AI agent merusak codebase. Safety-first git rollback.",
   "license": "MIT",
   "type": "module",
