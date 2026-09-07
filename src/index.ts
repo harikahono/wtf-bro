@@ -241,12 +241,13 @@ async function cmdCleanBackups(): Promise<void> {
 // wtf doctor — cek kondisi repo + hitung save point & backup
 async function cmdDoctor(): Promise<void> {
   const info = await doctor(CWD);
-  if (!info.isRepo) {
-    showError("Ga ketemu repo git di folder ini.");
-    return;
-  }
+  // JSON dulu — agar tidak kena TTY initialization di test
   if (process.argv.includes("--json")) {
     console.log(JSON.stringify(info, null, 2));
+    return;
+  }
+  if (!info.isRepo) {
+    showError("Ga ketemu repo git di folder ini.");
     return;
   }
   console.log(pc.bold("wtf-bro doctor:"));
