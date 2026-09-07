@@ -38,6 +38,7 @@ Catatan: `pnpm`/`bun` global kadang butuh `pnpm setup` / `bun setup` biar bin `w
 wtf                 # TUI interaktif: pilih level rollback (1 / 3 / nuklir)
 wtf save [label]    # tandain posisi aman SEKARANG (panic button)
 wtf steps           # list semua save point / checkpoint
+wtf steps --json    # sama, output JSON (buat AI agent)
 wtf undo            # balik ke save point terakhir, atau ke HEAD kalau ga ada
 wtf undo <label>    # balik ke save point tertentu (mis. wtf undo before-ai)
 wtf undo <commit>   # balik ke commit tertentu (hash / branch / tag)
@@ -45,8 +46,12 @@ wtf --reset 1       # rollback 1 commit (non-interaktif, tetap auto-backup)
 wtf --reset 3       # rollback 3 commit
 wtf --reset nuclear # reset + clean semua untracked
 wtf clean-backups   # hapus tag+stash backup lama (save point aman)
+wtf doctor          # cek kondisi repo: branch, save point & backup count
+wtf doctor --json   # sama, output JSON (buat AI agent)
 wtf log             # riwayat rollback + cara restore
 ```
+
+> `wtf undo <x>` yang ga ketemu di save point MAUPUN git ref ngasih pesan jelas (bukan raw git error): `Ga nemu save point label "x" atau git ref "x". Cek save point: wtf steps / Cek commit: git log --oneline`.
 
 Di TUI lu pilih:
 - **Rollback 1 commit** — undo kerusakan terakhir
@@ -116,6 +121,8 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 | Mau mundur beberapa commit | `wtf --reset N` |
 | Mau reset total + hapus file sampah | `wtf --reset nuclear` |
 | Mau balik ke commit tertentu | `wtf undo <hash>` |
+| Mau cek kondisi repo (branch, save point, backup) | `wtf doctor` |
+| AI agent mau baca checkpoint/repo sebagai data | `wtf steps --json` / `wtf doctor --json` |
 | Lupa abis ngapain, mau liat riwayat | `wtf log` |
 | Salah pencet, mau balikin kondisi | `git reset --hard wtf-bro-backup-<ts>` |
 | Backup tag/stash numpuk, mau bersihin | `wtf clean-backups` |
@@ -131,6 +138,9 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 - ✅ Auto-backup (tag + stash) sebelum tiap rollback
 - ✅ Save point (`wtf save`) + smart undo (`wtf undo`) — tombol aman buat dongo
 - ✅ `wtf steps` — daftar checkpoint + undo by label (`wtf undo <label>`)
+- ✅ `wtf doctor` — cek kondisi repo (branch, save point & backup count)
+- ✅ `--json` di `wtf steps` & `wtf doctor` — output JSON buat AI agent
+- ✅ Pesan jelas kalau `wtf undo <x>` ga ketemu di save point maupun git ref
 - ✅ `wtf clean-backups` — bersihin tag/stash backup lama (save point aman)
 - ✅ Audit log lokal di `~/.wtf/history.json`
 - ✅ Konfirmasi ekstra buat reset nuklir (ketik ulang nama branch)
