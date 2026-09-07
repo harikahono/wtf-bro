@@ -17,6 +17,7 @@ import {
   undoToSavePoint,
   cleanBackups,
   listSavePoints,
+  doctor,
   type RepoInfo,
 } from "../src/git.js";
 
@@ -271,4 +272,30 @@ test("undoToSavePoint(label): label ga ada -> ok:false", async () => {
   const dir = makeRepo(2);
   const undo = await undoToSavePoint(dir, "ga-ada-label");
   assert.equal(undo.ok, false);
+});
+
+// --- Slice: wtf doctor ---
+
+test("doctor: di repo valid -> balikin info repo", async () => {
+  const dir = makeRepo(5); // 5 commit
+  // bikin save point biar savePointCount > 0
+  await createSavePoint(dir, "test", "2026-01-01T01-00-00-000Z");
+  // bikin backup biar backupCount > 0
+  await createBackup(dir, "2026-01-01T02-00-00-000Z");
+
+  const info = await doctor(dir);
+  assert.equal(info.isRepo, true);
+  assert.ok(info.branch);
+  assert.equal(info.detachedHead, false);
+  assert.ok(info.commitCount >= 5);
+  assert.equal(info.savePointCount, 1);
+  assert.equal(info.backupCount, 1);
+});
+
+test("doctor: di non-repo -> isRepo false", async () => {
+  const dir = makeRepo(0); // ga ada repo, tapi makeRepo selalu init. Bikin manual non-repo.
+  const nonRepo = mkdtempSync(join(tmpdir(), "wtf-test-"));
+  dirsToClean.push(nonRepo);
+  const info = await doctor(nonRepo);
+  assert.equal(info.isRepo, false);
 });
