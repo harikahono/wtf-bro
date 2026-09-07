@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -91,6 +91,20 @@ test("doctor --json outputs JSON info", () => {
   assert.equal(info.commitCount, 1);
   assert.equal(info.savePointCount, 0);
   assert.equal(info.backupCount, 0);
+});
+
+test("init writes AGENTS.md and is idempotent", () => {
+  const dir = mkdtempSync(join(tmpdir(), "wtf-cli-test-"));
+  dirsToClean.push(dir);
+
+  execFileSync("node", [CLI, "init"], { cwd: dir, encoding: "utf8", stdio: "ignore" });
+  const first = readFileSync(join(dir, "AGENTS.md"), "utf8");
+  assert.ok(first.includes("wtf-bro terpasang di repo ini"));
+
+  // jalan 2x ga duplikat
+  execFileSync("node", [CLI, "init"], { cwd: dir, encoding: "utf8", stdio: "ignore" });
+  const second = readFileSync(join(dir, "AGENTS.md"), "utf8");
+  assert.equal(second, first);
 });
 
 test("doctor --json in non-repo outputs isRepo false", () => {

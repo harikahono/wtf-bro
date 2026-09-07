@@ -32,6 +32,9 @@ import {
   getHistoryFile,
   type HistoryEntry,
 } from "./history.js";
+import { AGENTS_MARKER, AGENTS_TEMPLATE } from "./agents-template.js";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const CWD = process.cwd();
 
@@ -274,6 +277,25 @@ async function cmdDoctor(): Promise<void> {
   }
 }
 
+// wtf init — drop AGENTS.md ke project consumer biar AI nurut pakai wtf.
+// Ga butuh repo git; jalan di folder mana pun. Idempotent: jalan 2x ga duplikat.
+function cmdInit(force: boolean): void {
+  const target = join(CWD, "AGENTS.md");
+  if (existsSync(target) && !force) {
+    const cur = readFileSync(target, "utf8");
+    if (cur.includes(AGENTS_MARKER)) {
+      p.log.info(pc.dim("AGENTS.md udah ada aturan wtf-bro. Skip (pakai --force buat timpa)."));
+      return;
+    }
+    writeFileSync(target, cur.replace(/\s*$/, "") + "\n\n" + AGENTS_TEMPLATE);
+    p.log.success("Aturan wtf-bro ditambahkan ke AGENTS.md yang udah ada.");
+    return;
+  }
+  writeFileSync(target, AGENTS_TEMPLATE);
+  p.log.success(`AGENTS.md dibuat di ${pc.bold(target)}`);
+  p.log.info(pc.dim("AI kayak Claude Code / OpenCode baca file itu otomatis."));
+}
+
 async function main(): Promise<void> {
   const sub = process.argv[2];
   const arg = process.argv[3];
@@ -300,6 +322,10 @@ async function main(): Promise<void> {
   }
   if (sub === "doctor") {
     await cmdDoctor();
+    return;
+  }
+  if (sub === "init") {
+    cmdInit(process.argv.includes("--force"));
     return;
   }
   if (sub === "--reset" && arg) {

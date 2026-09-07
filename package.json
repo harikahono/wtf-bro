@@ -21,7 +21,8 @@
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "AGENTS.template.md"
   ],
   "main": "dist/index.js",
   "scripts": {

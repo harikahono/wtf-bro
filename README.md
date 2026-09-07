@@ -36,6 +36,7 @@ Catatan: `pnpm`/`bun` global kadang butuh `pnpm setup` / `bun setup` biar bin `w
 
 ```bash
 wtf                 # TUI interaktif: pilih level rollback (1 / 3 / nuklir)
+wtf init            # pasang aturan AI ke AGENTS.md di folder ini (biar AI nurut pakai wtf)
 wtf save [label]    # tandain posisi aman SEKARANG (panic button)
 wtf steps           # list semua save point / checkpoint
 wtf steps --json    # sama, output JSON (buat AI agent)
@@ -113,6 +114,7 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 ### Kapan pakai apa (cheat sheet)
 | Situasi | Command |
 |---|---|
+| Mau pasang aturan AI di project ini | `wtf init` |
 | Mau amanin posisi sebelum AI kerja | `wtf save [label]` |
 | Mau liat semua save point / checkpoint | `wtf steps` |
 | AI ngaco, mau balik ke posisi aman | `wtf undo` |
@@ -127,6 +129,23 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 | Salah pencet, mau balikin kondisi | `git reset --hard wtf-bro-backup-<ts>` |
 | Backup tag/stash numpuk, mau bersihin | `wtf clean-backups` |
 
+## 🤖 Buat AI Agent (pasang ini biar AI nurut pakai wtf)
+
+Kalau project lu udah pasang `wtf-bro`, jalanin `wtf init` di folder project lu — aturan AI langsung ditulis ke `AGENTS.md` (kalau file-nya udah ada, aturannya ditambahkan, bukan ditimpa). Alternatif manual: copy `AGENTS.template.md` dari repo ini. AI kayak Claude Code / OpenCode baca file itu otomatis.
+
+```md
+## Safety: wtf-bro terpasang di repo ini
+
+Tool `wtf` (package `wtf-bro`) adalah tombol Undo. Patuhi ini:
+
+1. SEBELUM ubah kode: `wtf save step-<singkat>` (mis. `wtf save step-login`).
+2. Tiap langkah yang BAGUS + working: `wtf save` lagi dengan label baru. Jangan timpa label lama — biar bisa mundur ke tengah, bukan cuma ke awal.
+3. Buat baca checkpoint/repo sebagai data (jangan parse output manusia): `wtf steps --json`, `wtf doctor --json`.
+4. JANGAN `git reset --hard` / `git clean -fd` sendiri. JANGAN `wtf undo` / `wtf --reset` sendiri tanpa disuruh user — undo itu keputusan user, tugas lu cuma nyiapin save point yang rapi.
+```
+
+Kenapa AI-nya yang harus save? Kalau cuma save 1x di awal, 5x jalan AI yang numpuk cuma bisa di-undo ke awal doang. Save per langkah bagus = bisa balik ke tengah (`wtf undo step-3`).
+
 ## ⚠️ Batas kemampuan (jujur)
 
 - **Butuh commit atau `wtf save` buat full undo.** File baru yang belum PERNAH di-commit ga bisa dibalik — Git ga punya referensi ke dia. Solusinya: `wtf save` (atau commit) SEBELUM biarin AI ngubah-ubah, biar ada titik aman.
@@ -137,6 +156,7 @@ git stash apply wtf-bro-backup-<ts>     # atau: git stash pop
 
 - ✅ Auto-backup (tag + stash) sebelum tiap rollback
 - ✅ Save point (`wtf save`) + smart undo (`wtf undo`) — tombol aman buat dongo
+- ✅ `wtf init` — pasang aturan AI ke `AGENTS.md` (idempotent, ga nimpa isi lama)
 - ✅ `wtf steps` — daftar checkpoint + undo by label (`wtf undo <label>`)
 - ✅ `wtf doctor` — cek kondisi repo (branch, save point & backup count)
 - ✅ `--json` di `wtf steps` & `wtf doctor` — output JSON buat AI agent
